@@ -1,9 +1,9 @@
 services:
-  pjatk-army-java:
+  pjatk-workaholic-java:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pjatk-army-java
+    container_name: pjatk-workaholic-java
     restart: unless-stopped
     volumes:
       - .:/app
