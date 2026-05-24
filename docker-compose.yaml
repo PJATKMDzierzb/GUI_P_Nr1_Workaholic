@@ -1,0 +1,9 @@
+services:
+  pjatk-army-java:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pjatk-army-java
+    restart: unless-stopped
+    volumes:
+      - .:/app
