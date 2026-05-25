@@ -10,10 +10,10 @@ public class FileLogger implements AutoCloseable, ILogger {
     private BufferedWriter writer;
 
     public FileLogger(String filePath) throws IOException {
-        this.writer = new BufferedWriter(new FileWriter(filePath, true));
+        this.writer = new BufferedWriter(new FileWriter(filePath, false));
     }
 
-    public void save(String description) throws IOException {
+    public void log(String description) throws IOException {
         writer.write(description);
         writer.newLine();
     }

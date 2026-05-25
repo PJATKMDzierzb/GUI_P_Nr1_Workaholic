@@ -1,5 +1,6 @@
 package edu.pjwstk.s35267.workaholic.application;
 
+import edu.pjwstk.s35267.workaholic.domain.ActionLogger;
 import edu.pjwstk.s35267.workaholic.infrastructure.contract.IdentifiableThread;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class Praca extends IdentifiableThread {
     @Override
     public void run() {
         try {
+            ActionLogger.saveAction("Start work " + this.opis + " #" + this.getUnique());
             while (
                 this.dependencies.size() > 0
                 && this.dependencies.stream().anyMatch(n -> n.czyZrealizowane == false)
@@ -37,6 +39,7 @@ public class Praca extends IdentifiableThread {
                 Thread.sleep(this.unitOfTime);
             }
 
+            ActionLogger.saveAction("Work " + this.opis + " #" + this.getUnique() + " can proceed!");
             System.out.println("Praca #" + this.getUnique() + " zaczyna swoje wykonywanie!");
             Thread.sleep(this.unitOfTime * this.rodzajPracy.weight);
             System.out.println("Praca #" + this.getUnique() + " zakończyła swoje wykonywanie!");

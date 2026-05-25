@@ -1,6 +1,7 @@
 package edu.pjwstk.s35267.workaholic.presentation;
 
 import edu.pjwstk.s35267.workaholic.application.Praca;
+import edu.pjwstk.s35267.workaholic.domain.ActionLogger;
 import edu.pjwstk.s35267.workaholic.domain.Brygada;
 import edu.pjwstk.s35267.workaholic.domain.contract.IWykonawca;
 import edu.pjwstk.s35267.workaholic.infrastructure.contract.Identifiable;
@@ -46,6 +47,7 @@ public class Zlecenie extends Identifiable implements Runnable {
     }
 
     public boolean addWork(Praca newWork) {
+        ActionLogger.saveAction("Try to add new work to task " + this.getUnique(), new Object[]{ newWork });
         if (!this.state.moznaModyfikowac) {
             return false;
         }
@@ -59,6 +61,7 @@ public class Zlecenie extends Identifiable implements Runnable {
             return false;
         }
 
+        ActionLogger.saveAction("Set new brigade for task " + this.getUnique(), new Object[]{ newBrigade });
         this.brigade = newBrigade;
 
         return true;
@@ -110,6 +113,7 @@ public class Zlecenie extends Identifiable implements Runnable {
     private LocalDateTime changeState(StanZlecenia state) {
         this.state = state;
         System.out.println(state.komunikat.get(this.getUnique() + ""));
+        ActionLogger.saveAction("Task " + this.getUnique() + " changed the status to " + state.etykieta, new Object[]{ state });
 
         return LocalDateTime.now();
     }

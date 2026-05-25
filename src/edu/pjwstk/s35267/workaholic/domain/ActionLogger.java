@@ -5,6 +5,7 @@ import edu.pjwstk.s35267.workaholic.infrastructure.contract.IdentifiableThread;
 import edu.pjwstk.s35267.workaholic.infrastructure.contract.ILogger;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 public abstract class ActionLogger {
     private static ILogger logger;
@@ -17,18 +18,24 @@ public abstract class ActionLogger {
         ActionLogger.logger = null;
     }
 
+    public static void saveAction(String description)
+    {
+        ActionLogger.saveAction(description, new Object[0]);
+    }
+
     public static void saveAction(String description, Object[] objects)
     {
         if (ActionLogger.logger == null) {
-            throw new RuntimeException("No logger registered, cannot persist an action");
+            return;
         }
 
         try {
-            ActionLogger.logger.save(
-                description + ", related objects: " + ActionLogger.generateClassesDescription(objects)
+            ActionLogger.logger.log(
+                "[" +  LocalDateTime.now() + "] " + description
+                + (objects.length > 0 ?  ", related objects: " + ActionLogger.generateClassesDescription(objects) : "")
             );
         } catch (IOException e) {
-            System.out.println("Log was not saved: " + e.getMessage());
+            System.err.println("Log was not saved: " + e.getMessage());
         }
     }
 

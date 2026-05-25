@@ -25,11 +25,17 @@ public class DzialPracownikow extends Identifiable {
      */
     static public DzialPracownikow create(String nazwa) {
         try {
+            ActionLogger.saveAction("New department " + nazwa + "!");
+
             return new DzialPracownikow(nazwa);
         } catch (NotUniqueNameException e) {
             System.out.println(e.getMessage());
             DzialPracownikow newDzial = new DzialPracownikow(nazwa, DzialPracownikow.namesMap.get(nazwa));
             System.out.println("Nowa nazwa działu: " + newDzial.nazwa);
+            ActionLogger.saveAction(
+                    "Department tried to take existing name " + nazwa + ", new name was generated: " + newDzial.nazwa,
+                    new Object[]{ newDzial }
+            );
 
             return newDzial;
         }
@@ -40,6 +46,7 @@ public class DzialPracownikow extends Identifiable {
     }
 
     public void addWorker(Pracownik worker) {
+        ActionLogger.saveAction("Add new worker to department " + this.nazwa, new Object[]{ worker });
         this.workers.add(worker);
     }
 

@@ -29,6 +29,7 @@ public class Brygadzista extends Uzytkownik implements IWykonawca {
     }
 
     public void addBrigade(Brygada brigade) {
+        ActionLogger.saveAction("Add new brigade to Brygadzista " + this.name + " " + this.surname, new Object[]{ brigade });
         this.brigades.add(brigade);
     }
 

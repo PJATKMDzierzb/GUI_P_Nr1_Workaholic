@@ -30,10 +30,12 @@ public class Brygada extends Identifiable {
             throw new InvalidParameterException("Nie możesz dodać obiektu Uzytkownik do pracowników");
         }
 
+        ActionLogger.saveAction("Worker added to brigade " + this.getUnique(), new Object[]{ worker });
         this.pracownicy.add(worker);
     }
 
     public void addWorker(ArrayList<Pracownik> workers) {
+        ActionLogger.saveAction(workers.size() + " workers added to brigade " + this.getUnique(), new Object[]{ workers });
         this.pracownicy.addAll(workers);
     }
 
@@ -42,6 +44,7 @@ public class Brygada extends Identifiable {
     }
 
     public void addTask(Zlecenie task) {
+        ActionLogger.saveAction("New task added to brigade " + this.getUnique(), new Object[]{ task });
         this.tasks.add(task);
     }
 
