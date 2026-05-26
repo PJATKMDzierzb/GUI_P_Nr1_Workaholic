@@ -67,13 +67,6 @@ public class Main {
         deploymentEngine.start();
 
         try {
-            int counter = 0;
-            while (serverRoomDeployment.getState() != StanZlecenia.ZAKONCZONE) {
-                System.out.print(".");
-                if (counter > 10) System.out.println("");
-                Thread.sleep(100);
-            }
-            System.out.println("");
             deploymentEngine.join();
         } catch (InterruptedException e) {
             System.err.println("Main showcase execution monitoring was interrupted.");
@@ -195,10 +188,10 @@ public class Main {
 
     private static void testWorkers() {
         Praca work = new Praca(RodzajPracy.OGOLNA, 0, "Opis pracy #1");
-        ArrayList<Praca> dependencies2 = new ArrayList();
+        ArrayList<Praca> dependencies2 = new ArrayList<>();
         dependencies2.add(work);
         Praca work2 = new Praca(RodzajPracy.OGOLNA, 0, "Opis pracy #2", dependencies2);
-        ArrayList<Praca> dependencies3 = new ArrayList();
+        ArrayList<Praca> dependencies3 = new ArrayList<>();
         dependencies3.add(work2);
         Praca work3 = new Praca(RodzajPracy.OGOLNA, 0, "Opis pracy #3", dependencies3);
 
@@ -252,7 +245,7 @@ public class Main {
             task.run();
             assert false : "Task started with not available stuff";
         } catch (InvalidParameterException e) {
-            assert e.getMessage() == "Nie możesz zacząć nowego zlecenia jeżeli nie wszyscy pracownicy są dostępni";
+            assert e.getMessage().equals("Nie możesz zacząć nowego zlecenia jeżeli nie wszyscy pracownicy są dostępni");
         }
     }
 
@@ -263,7 +256,7 @@ public class Main {
             assert false : "Task started even without foreman or work";
         } catch (InvalidParameterException e) {
             // do nothing
-            assert e.getMessage() == "Nie możesz zacząć nowego zlecenia jak nie ustawiłeś brygady albo nie ma pracy do wykonania";
+            assert e.getMessage().equals("Nie możesz zacząć nowego zlecenia jak nie ustawiłeś brygady albo nie ma pracy do wykonania");
         }
 
         try {
@@ -274,7 +267,7 @@ public class Main {
             task.run();
             assert false : "Task started even without work";
         } catch (InvalidParameterException e) {
-            assert e.getMessage() == "Nie możesz zacząć nowego zlecenia jak nie ustawiłeś brygady albo nie ma pracy do wykonania";
+            assert e.getMessage().equals("Nie możesz zacząć nowego zlecenia jak nie ustawiłeś brygady albo nie ma pracy do wykonania");
         }
 
         try {
@@ -282,7 +275,7 @@ public class Main {
             task.run();
             assert false : "Task started even without foreman";
         } catch (InvalidParameterException e) {
-            assert e.getMessage() == "Nie możesz zacząć nowego zlecenia jak nie ustawiłeś brygady albo nie ma pracy do wykonania";
+            assert e.getMessage().equals("Nie możesz zacząć nowego zlecenia jak nie ustawiłeś brygady albo nie ma pracy do wykonania");
         }
     }
 
@@ -296,11 +289,11 @@ public class Main {
         Brygada brigade = new Brygada("Happy Team #1", foreman, workers);
 
         Praca general = new Praca(RodzajPracy.OGOLNA, 0, "Cleaning, setting up the space");
-        ArrayList<Praca> disassemblyDependencies = new ArrayList();
+        ArrayList<Praca> disassemblyDependencies = new ArrayList<>();
         disassemblyDependencies.add(general);
         Praca disassembly1 = new Praca(RodzajPracy.DEMONTAZ, 0, "Removal of old electronics", disassemblyDependencies);
         Praca disassembly2 = new Praca(RodzajPracy.DEMONTAZ, 0, "Disassembling old furniture", disassemblyDependencies);
-        ArrayList<Praca> assemblyDependencies = new ArrayList();
+        ArrayList<Praca> assemblyDependencies = new ArrayList<>();
         assemblyDependencies.add(disassembly1);
         assemblyDependencies.add(disassembly2);
         Praca assembly = new Praca(RodzajPracy.MONTAZ, 0, "Installing new AGD and furniture", assemblyDependencies);
