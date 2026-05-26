@@ -54,4 +54,8 @@ public class Brygada extends Identifiable {
     public ArrayList<Zlecenie> getTasks() {
         return new ArrayList<>(tasks);
     }
+
+    public String getNazwa() {
+        return nazwa;
+    }
 }

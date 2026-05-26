@@ -23,13 +23,64 @@ public class Main {
         try (FileLogger logger = new FileLogger(Main.outputFile)) {
             ActionLogger.register(logger);
 
-
+            Main.runApp();
 
             ActionLogger.unregister();
         } catch (IOException e) {
             System.err.println("An error occurred: " + e.getMessage());
         }
         System.out.println("#### Workaholic™ application has finished ####");
+    }
+
+    private static void runApp() {
+        DzialPracownikow productionDept = DzialPracownikow.create("Production & Assembly");
+        Brygadzista foreman = Main.generateForman(productionDept);
+        Specjalista assembler = Main.generateSpecialist(productionDept);
+
+        ArrayList<Pracownik> staff = new ArrayList<>();
+        staff.add(assembler);
+        Brygada buildCrew = new Brygada("Superforce Crew #1", foreman, staff);
+
+        System.out.println("Brigade '" + buildCrew.getNazwa() + "' is ready for deployment.");
+
+        Praca setupInfra = new Praca(RodzajPracy.OGOLNA, 2, "Preparing power supplies and server racks");
+
+        ArrayList<Praca> phase2Deps = new ArrayList<>();
+        phase2Deps.add(setupInfra);
+        Praca installHardware = new Praca(RodzajPracy.MONTAZ, 3, "Mounting servers and switches", phase2Deps);
+
+        ArrayList<Praca> phase3Deps = new ArrayList<>();
+        phase3Deps.add(installHardware);
+        Praca configNetwork = new Praca(RodzajPracy.MONTAZ, 1, "Configuring core routers and firewalls", phase3Deps);
+
+        ArrayList<Praca> projectPlan = new ArrayList<>();
+        projectPlan.add(setupInfra);
+        projectPlan.add(installHardware);
+        projectPlan.add(configNetwork);
+
+        Zlecenie serverRoomDeployment = new Zlecenie(true, projectPlan, buildCrew);
+        System.out.println("Created project order: " + serverRoomDeployment);
+        System.out.println("Initial Order Status: " + serverRoomDeployment.getState());
+
+        System.out.println(">>> Dispatching Server Room Deployment Thread...");
+        Thread deploymentEngine = new Thread(serverRoomDeployment);
+        deploymentEngine.start();
+
+        try {
+            int counter = 0;
+            while (serverRoomDeployment.getState() != StanZlecenia.ZAKONCZONE) {
+                System.out.print(".");
+                if (counter > 10) System.out.println("");
+                Thread.sleep(100);
+            }
+            System.out.println("");
+            deploymentEngine.join();
+        } catch (InterruptedException e) {
+            System.err.println("Main showcase execution monitoring was interrupted.");
+            Thread.currentThread().interrupt();
+        }
+
+        System.out.println("Final Project Order Status: " + serverRoomDeployment.getState());
     }
 
     private static void preformFunctionalTests() {
