@@ -6,15 +6,15 @@ import edu.pjwstk.s35267.workaholic.infrastructure.contract.IdentifiableThread;
 import java.util.ArrayList;
 
 public class Praca extends IdentifiableThread {
-    public static final int unitOfTime = 1000;
+    public static int unitOfTime = 1000;
     private RodzajPracy rodzajPracy;
     private int czasPracy; // @TODO what purpose this have??
     private boolean czyZrealizowane = false;
-    private String opis; // @TODO what purpose this have??
+    private String opis;
     private ArrayList<Praca> dependencies;
 
     public static Praca getById(int id) {
-        return IdentifiableThread.getById(id, Praca.class);
+        return IdentifiableThread.getById(id, Praca.class.getName());
     }
 
     public Praca(RodzajPracy rodzajPracy, int czasPracy, String opis, ArrayList<Praca> dependencies) {
@@ -32,6 +32,7 @@ public class Praca extends IdentifiableThread {
     public void run() {
         try {
             ActionLogger.saveAction("Start work " + this.opis + " #" + this.getUnique());
+            System.out.println("Praca #" + this.getUnique() + " (" + this.getOpis() + ") została zakolejkowana!");
             while (
                 this.dependencies.size() > 0
                 && this.dependencies.stream().anyMatch(n -> n.czyZrealizowane == false)
@@ -40,7 +41,7 @@ public class Praca extends IdentifiableThread {
             }
 
             ActionLogger.saveAction("Work " + this.opis + " #" + this.getUnique() + " can proceed!");
-            System.out.println("Praca #" + this.getUnique() + " zaczyna swoje wykonywanie!");
+            System.out.println("Praca #" + this.getUnique() + " (" + this.getOpis() + ") zaczyna swoje wykonywanie!");
             Thread.sleep(this.unitOfTime * this.rodzajPracy.weight);
             System.out.println("Praca #" + this.getUnique() + " zakończyła swoje wykonywanie!");
             this.czyZrealizowane = true;
@@ -51,5 +52,9 @@ public class Praca extends IdentifiableThread {
 
     public boolean czyZrealizowane() {
         return czyZrealizowane;
+    }
+
+    public String getOpis() {
+        return opis;
     }
 }

@@ -8,6 +8,7 @@ import edu.pjwstk.s35267.workaholic.infrastructure.contract.Identifiable;
 
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class Zlecenie extends Identifiable implements Runnable {
@@ -20,15 +21,15 @@ public class Zlecenie extends Identifiable implements Runnable {
     private LocalDateTime finished;
 
     public static Zlecenie getById(int id) {
-        return (Zlecenie) Identifiable.getById(id, Zlecenie.class);
+        return Identifiable.getById(id, Zlecenie.class.getName());
     }
 
     public Zlecenie(boolean czyPlanowane) {
-        this(czyPlanowane, null, null);
+        this(czyPlanowane, new ArrayList<>(), null);
     }
 
     public Zlecenie(boolean czyPlanowane, Brygada brigade) {
-        this(czyPlanowane, null, brigade);
+        this(czyPlanowane, new ArrayList<>(), brigade);
     }
 
     public Zlecenie(boolean czyPlanowane, Collection<Praca> work) {
@@ -47,10 +48,12 @@ public class Zlecenie extends Identifiable implements Runnable {
     }
 
     public boolean addWork(Praca newWork) {
-        ActionLogger.saveAction("Try to add new work to task " + this.getUnique(), new Object[]{ newWork });
+        ActionLogger.saveAction("Try to add new work to task #" + this.getUnique(), new Object[]{ newWork });
         if (!this.state.moznaModyfikowac) {
+            ActionLogger.saveAction("\tWork not added!");
             return false;
         }
+        ActionLogger.saveAction("\tWork added successfully!");
         this.work.add(newWork);
 
         return true;
@@ -61,10 +64,14 @@ public class Zlecenie extends Identifiable implements Runnable {
             return false;
         }
 
-        ActionLogger.saveAction("Set new brigade for task " + this.getUnique(), new Object[]{ newBrigade });
+        ActionLogger.saveAction("Set new brigade for task #" + this.getUnique(), new Object[]{ newBrigade });
         this.brigade = newBrigade;
 
         return true;
+    }
+
+    public StanZlecenia getState() {
+        return state;
     }
 
     @Override
@@ -75,7 +82,7 @@ public class Zlecenie extends Identifiable implements Runnable {
             );
         }
 
-        if (this.isEveryoneAvailable()) {
+        if (!this.isEveryoneAvailable()) {
             throw new InvalidParameterException(
                 "Nie możesz zacząć nowego zlecenia jeżeli nie wszyscy pracownicy są dostępni"
             );
@@ -107,6 +114,10 @@ public class Zlecenie extends Identifiable implements Runnable {
             }
         }
 
+        ActionLogger.saveAction(
+            "Zadanie #" + this.getUnique() + " zakończyło swoje działanie, zajęło mu to "
+            + counter + " jednostek czasu"
+        );
         this.finished = this.changeState(StanZlecenia.ZAKONCZONE);
     }
 
@@ -119,8 +130,10 @@ public class Zlecenie extends Identifiable implements Runnable {
     }
 
     private boolean isEveryoneAvailable() {
-        return this.brigade.getWorkers().stream().anyMatch(worker -> {
-            if (worker instanceof IWykonawca) return ((IWykonawca) worker).czyDostepny();
+        return this.brigade.getWorkers().stream().allMatch(worker -> {
+            if (worker instanceof IWykonawca) {
+                return ((IWykonawca) worker).czyDostepny();
+            }
 
             return true;
         });

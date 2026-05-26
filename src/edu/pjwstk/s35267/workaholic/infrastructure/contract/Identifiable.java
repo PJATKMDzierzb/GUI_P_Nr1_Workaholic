@@ -7,12 +7,16 @@ public abstract class Identifiable {
     private static HashMap<String, Object> objectMap = new HashMap<>();
     protected final int unique;
 
-    public static <T> T getById(int id, Class<T> clazz) {
+    public static <T> T getById(int id, Class clazz) {
+        return (T) Identifiable.objectMap.get(Identifiable.generateObjectHas(id, clazz.getName()));
+    }
+
+    public static <T> T getById(int id, String clazz) {
         return (T) Identifiable.objectMap.get(Identifiable.generateObjectHas(id, clazz));
     }
 
-    private static String generateObjectHas(int id, Class clazz) {
-        return clazz.getName() + id;
+    private static String generateObjectHas(int id, String clazz) {
+        return clazz + id;
     }
 
     public int getUnique() {
@@ -27,15 +31,15 @@ public abstract class Identifiable {
     }
 
     protected Identifiable() {
-        this.unique = setup(this.getClass());
+        this.unique = setup(this);
     }
 
-    protected Identifiable(Class clazz) {
+    protected Identifiable(Object clazz) {
         this.unique = setup(clazz);
     }
 
-    protected synchronized int setup(Class clazz) {
-        String className = clazz.getName();
+    protected synchronized int setup(Object clazz) {
+        String className = clazz.getClass().getName();
         int counter = 0;
         if (Identifiable.classCounter.containsKey(className)) {
             counter = Identifiable.classCounter.get(className);

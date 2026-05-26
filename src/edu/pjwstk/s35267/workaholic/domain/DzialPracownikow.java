@@ -9,7 +9,7 @@ import java.util.HashMap;
 
 public class DzialPracownikow extends Identifiable {
     static private HashMap<String, Integer> namesMap = new HashMap<>();
-    private ArrayList<Pracownik> workers;
+    private ArrayList<Pracownik> workers = new ArrayList<>();
     private String nazwa;
 
     /**
@@ -26,6 +26,16 @@ public class DzialPracownikow extends Identifiable {
     static public DzialPracownikow create(String nazwa) {
         try {
             ActionLogger.saveAction("New department " + nazwa + "!");
+
+            /**
+             * Making sure that name is unique before calling a constructor as this would
+             * increase the ID counter of DzialPracownikow
+             */
+            if (DzialPracownikow.namesMap.containsKey(nazwa)) {
+                throw new NotUniqueNameException(
+                    String.format("Nazwa Działu Pracowników musi byc unikalna, podana nazwa %s już istnieje", nazwa)
+                );
+            }
 
             return new DzialPracownikow(nazwa);
         } catch (NotUniqueNameException e) {
@@ -50,13 +60,11 @@ public class DzialPracownikow extends Identifiable {
         this.workers.add(worker);
     }
 
-    private DzialPracownikow(String name) throws NotUniqueNameException {
-        if (DzialPracownikow.namesMap.containsKey(name)) {
-            throw new NotUniqueNameException(
-                String.format("Nazwa Działu Pracowników musi byc unikalna, podana nazwa %s już istnieje", name)
-            );
-        }
+    public String getNazwa() {
+        return nazwa;
+    }
 
+    private DzialPracownikow(String name) throws NotUniqueNameException {
         DzialPracownikow.namesMap.put(name, 1);
         this.nazwa = name;
         this.workers = new ArrayList<>();

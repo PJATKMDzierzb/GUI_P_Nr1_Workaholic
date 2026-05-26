@@ -3,17 +3,17 @@ package edu.pjwstk.s35267.workaholic.domain.contract;
 import edu.pjwstk.s35267.workaholic.domain.DzialPracownikow;
 import edu.pjwstk.s35267.workaholic.infrastructure.contract.Identifiable;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 
 public abstract class Pracownik extends Identifiable implements Comparable<Pracownik> {
     static ArrayList<Pracownik> workers = new ArrayList<>();
     protected String name;
     protected String surname;
-    protected Date birth;
+    protected LocalDate birth;
     protected DzialPracownikow department;
 
-    public Pracownik(String name, String surname, Date birth, DzialPracownikow department) {
+    public Pracownik(String name, String surname, LocalDate birth, DzialPracownikow department) {
         this.name = name;
         this.surname = surname;
         this.birth = birth;

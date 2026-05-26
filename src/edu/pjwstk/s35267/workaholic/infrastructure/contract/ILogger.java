@@ -4,5 +4,4 @@ import java.io.IOException;
 
 public interface ILogger {
     void log(String description) throws IOException;
-    void close() throws IOException;
 }

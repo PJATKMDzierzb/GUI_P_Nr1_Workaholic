@@ -26,7 +26,7 @@ public class Brygada extends Identifiable {
     }
 
     public void addWorker(Pracownik worker) {
-        if (worker.getClass() == Uzytkownik.class) {
+        if (worker.getClass().equals(Uzytkownik.class)) {
             throw new InvalidParameterException("Nie możesz dodać obiektu Uzytkownik do pracowników");
         }
 
@@ -40,7 +40,10 @@ public class Brygada extends Identifiable {
     }
 
     public ArrayList<Pracownik> getWorkers() {
-        return pracownicy;
+        ArrayList workers = new ArrayList<>(pracownicy);
+        workers.add(this.brygadzista);
+
+        return workers;
     }
 
     public void addTask(Zlecenie task) {
@@ -49,6 +52,6 @@ public class Brygada extends Identifiable {
     }
 
     public ArrayList<Zlecenie> getTasks() {
-        return tasks;
+        return new ArrayList<>(tasks);
     }
 }

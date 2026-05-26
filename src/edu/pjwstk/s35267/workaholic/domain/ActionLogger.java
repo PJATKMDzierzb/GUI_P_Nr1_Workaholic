@@ -7,6 +7,16 @@ import edu.pjwstk.s35267.workaholic.infrastructure.contract.ILogger;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
+/**
+ * As we lack any DI and I refuse to just handle everything in one service,
+ * I had to implement some singleton kind of static service that accepts
+ * different kinds of loggers for the script execution.
+ * By separating file handler from the logger we can actually still use the
+ * try-catch mechanism.
+ *
+ * Not so sure about best practises in Java framework-less env though :<
+ * but seems okay to me.
+ */
 public abstract class ActionLogger {
     private static ILogger logger;
 
