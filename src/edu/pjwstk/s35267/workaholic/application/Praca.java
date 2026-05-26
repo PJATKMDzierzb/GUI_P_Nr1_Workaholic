@@ -6,6 +6,7 @@ import edu.pjwstk.s35267.workaholic.infrastructure.contract.IdentifiableThread;
 import java.util.ArrayList;
 
 public class Praca extends IdentifiableThread {
+    public static final Object classLock = new Object();
     public static int unitOfTime = 1000;
     private RodzajPracy rodzajPracy;
     private int czasPracy; // @TODO what purpose this have??
@@ -33,18 +34,23 @@ public class Praca extends IdentifiableThread {
         try {
             ActionLogger.saveAction("Start work " + this.opis + " #" + this.getUnique());
             System.out.println("Praca #" + this.getUnique() + " (" + this.getOpis() + ") została zakolejkowana!");
-            while (
-                this.dependencies.size() > 0
-                && this.dependencies.stream().anyMatch(n -> n.czyZrealizowane == false)
-            ) {
-                Thread.sleep(this.unitOfTime);
+            synchronized (classLock) {
+                while (
+                    !this.dependencies.isEmpty()
+                    && this.dependencies.stream().anyMatch(n -> !n.czyZrealizowane)
+                ) {
+                    classLock.wait();
+                }
             }
 
             ActionLogger.saveAction("Work " + this.opis + " #" + this.getUnique() + " can proceed!");
             System.out.println("Praca #" + this.getUnique() + " (" + this.getOpis() + ") zaczyna swoje wykonywanie!");
             Thread.sleep(this.unitOfTime * this.rodzajPracy.weight);
             System.out.println("Praca #" + this.getUnique() + " zakończyła swoje wykonywanie!");
-            this.czyZrealizowane = true;
+            synchronized (classLock) {
+                this.czyZrealizowane = true;
+                classLock.notifyAll();
+            }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

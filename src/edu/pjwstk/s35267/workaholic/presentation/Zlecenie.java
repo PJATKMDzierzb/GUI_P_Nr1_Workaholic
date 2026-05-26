@@ -92,31 +92,23 @@ public class Zlecenie extends Identifiable implements Runnable {
 
         this.started = this.changeState(StanZlecenia.ROZPOCZETE);
 
-        int iterationLimit = 100;
-        int counter = 0;
-        while (this.work.stream().anyMatch(n -> n.czyZrealizowane() == false)) {
-
-            // Failsafe
-            if (counter >= iterationLimit) {
-                System.out.println(
-                        "Limit czasu oczekiwania na ukończenie pracy osiągnięty! Prace za długo się wykonywały! "
-                        + "Całkowity czas wykonania jednego zlecenia nie może przekraczać " + iterationLimit
-                        + " jednostek czasu."
-                );
-                break;
-            }
-            counter++;
-
-            try {
-                Thread.sleep(Praca.unitOfTime);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+        long startTime = System.currentTimeMillis();
+        synchronized (Praca.classLock) {
+            while (this.work.stream().anyMatch(n -> n.czyZrealizowane() == false)) {
+                try {
+                    Praca.classLock.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
+        long totalDuration = (System.currentTimeMillis() - startTime);
+        System.out.println("Zadanie #" + this.getUnique() + " zakończyło swoje działanie, zajęło mu to "
+                + (totalDuration/1000.0) + " sekund");
         ActionLogger.saveAction(
             "Zadanie #" + this.getUnique() + " zakończyło swoje działanie, zajęło mu to "
-            + counter + " jednostek czasu"
+            + (totalDuration/1000.0) + " sekund"
         );
         this.finished = this.changeState(StanZlecenia.ZAKONCZONE);
     }
