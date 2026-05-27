@@ -1,9 +1,0 @@
-services:
-  pjatk-workaholic-java:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pjatk-workaholic-java
-    restart: unless-stopped
-    volumes:
-      - .:/app
