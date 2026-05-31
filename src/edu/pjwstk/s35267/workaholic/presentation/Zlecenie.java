@@ -4,43 +4,48 @@ import edu.pjwstk.s35267.workaholic.application.Praca;
 import edu.pjwstk.s35267.workaholic.domain.ActionLogger;
 import edu.pjwstk.s35267.workaholic.domain.Brygada;
 import edu.pjwstk.s35267.workaholic.domain.contract.IWykonawca;
+import edu.pjwstk.s35267.workaholic.infrastructure.StateRepository;
 import edu.pjwstk.s35267.workaholic.infrastructure.contract.Identifiable;
 
+import java.io.Serializable;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class Zlecenie extends Identifiable implements Runnable {
+public class Zlecenie extends Identifiable implements Runnable, Serializable {
     private Collection<Praca> work;
     private Brygada brigade;
-    private final boolean czyPlanowane; // @TODO what purpose this serves?
+    private final boolean czyPlanowane;
     private StanZlecenia state = StanZlecenia.UTWORZONE;
     private final LocalDateTime created;
     private LocalDateTime started;
     private LocalDateTime finished;
+    private String code;
 
     public static Zlecenie getById(int id) {
         return Identifiable.getById(id, Zlecenie.class.getName());
     }
 
-    public Zlecenie(boolean czyPlanowane) {
-        this(czyPlanowane, new ArrayList<>(), null);
+    public Zlecenie(boolean czyPlanowane, String code) {
+        this(czyPlanowane, new ArrayList<>(), null, code);
     }
 
-    public Zlecenie(boolean czyPlanowane, Brygada brigade) {
-        this(czyPlanowane, new ArrayList<>(), brigade);
+    public Zlecenie(boolean czyPlanowane, Brygada brigade, String code) {
+        this(czyPlanowane, new ArrayList<>(), brigade, code);
     }
 
-    public Zlecenie(boolean czyPlanowane, Collection<Praca> work) {
-        this(czyPlanowane, work, null);
+    public Zlecenie(boolean czyPlanowane, Collection<Praca> work, String code) {
+        this(czyPlanowane, work, null, code);
     }
 
-    public Zlecenie(boolean czyPlanowane, Collection<Praca> work, Brygada brigade) {
+    public Zlecenie(boolean czyPlanowane, Collection<Praca> work, Brygada brigade, String code) {
         this.czyPlanowane = czyPlanowane;
         this.work = work;
         this.brigade = brigade;
         this.created = LocalDateTime.now();
+        this.code = code;
+        StateRepository.persistAndFlush(this, this.code);
     }
 
     public boolean isFinished() {
@@ -55,8 +60,13 @@ public class Zlecenie extends Identifiable implements Runnable {
         }
         ActionLogger.saveAction("\tWork added successfully!");
         this.work.add(newWork);
+        StateRepository.persistAndFlush(this, this.code);
 
         return true;
+    }
+
+    public ArrayList<Praca> getWork() {
+        return new ArrayList<>(this.work);
     }
 
     public boolean setBrigade(Brygada newBrigade) {
@@ -66,6 +76,7 @@ public class Zlecenie extends Identifiable implements Runnable {
 
         ActionLogger.saveAction("Set new brigade for task #" + this.getUnique(), new Object[]{ newBrigade });
         this.brigade = newBrigade;
+        StateRepository.persistAndFlush(this, this.code);
 
         return true;
     }
@@ -95,6 +106,7 @@ public class Zlecenie extends Identifiable implements Runnable {
         long startTime = System.currentTimeMillis();
         synchronized (Praca.classLock) {
             while (this.work.stream().anyMatch(n -> n.czyZrealizowane() == false)) {
+                StateRepository.persistAndFlush(this, this.code);
                 try {
                     Praca.classLock.wait();
                 } catch (InterruptedException e) {
@@ -111,12 +123,14 @@ public class Zlecenie extends Identifiable implements Runnable {
             + (totalDuration/1000.0) + " sekund"
         );
         this.finished = this.changeState(StanZlecenia.ZAKONCZONE);
+        StateRepository.persistAndFlush(this, this.code);
     }
 
     private LocalDateTime changeState(StanZlecenia state) {
         this.state = state;
         System.out.println(state.komunikat.get(this.getUnique() + ""));
         ActionLogger.saveAction("Task " + this.getUnique() + " changed the status to " + state.etykieta, new Object[]{ state });
+        StateRepository.persistAndFlush(this, this.code);
 
         return LocalDateTime.now();
     }

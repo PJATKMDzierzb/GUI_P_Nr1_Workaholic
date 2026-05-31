@@ -1,6 +1,8 @@
 package edu.pjwstk.s35267.workaholic.infrastructure.contract;
 
-public abstract class IdentifiableThread extends Thread {
+import java.io.Serializable;
+
+public abstract class IdentifiableThread extends Thread implements Serializable {
     protected Identifiable identifiable;
 
     protected IdentifiableThread() {

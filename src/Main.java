@@ -2,7 +2,8 @@ import edu.pjwstk.s35267.workaholic.application.Praca;
 import edu.pjwstk.s35267.workaholic.application.RodzajPracy;
 import edu.pjwstk.s35267.workaholic.domain.*;
 import edu.pjwstk.s35267.workaholic.domain.contract.Pracownik;
-import edu.pjwstk.s35267.workaholic.infrastructure.FileLogger;
+import edu.pjwstk.s35267.workaholic.infrastructure.FileWriter;
+import edu.pjwstk.s35267.workaholic.infrastructure.StateRepository;
 import edu.pjwstk.s35267.workaholic.presentation.StanZlecenia;
 import edu.pjwstk.s35267.workaholic.presentation.Zlecenie;
 
@@ -20,7 +21,7 @@ public class Main {
         Main.preformFunctionalTests();
 
         System.out.println("#### Starting Workaholic™ application ####");
-        try (FileLogger logger = new FileLogger(Main.outputFile)) {
+        try (FileWriter logger = new FileWriter(Main.outputFile)) {
             ActionLogger.register(logger);
 
             Main.runApp();
@@ -33,6 +34,37 @@ public class Main {
     }
 
     private static void runApp() {
+        Zlecenie serverRoomDeployment = (Zlecenie) StateRepository.find(Zlecenie.class, "main");
+        if (serverRoomDeployment == null) {
+            System.out.println("Last state of Zlecenie was not found, generating new one");
+            serverRoomDeployment = Main.init();
+        } else {
+            System.out.println("Loaded state:");
+            ArrayList<Praca> work = serverRoomDeployment.getWork();
+            work.forEach(item -> {
+                System.out.println("\t#" + item.getUnique() + " " + item.getOpis() + ", finished: " + (item.czyZrealizowane() ? "yes" : "no"));
+            });
+        }
+
+        System.out.println("Created project order: " + serverRoomDeployment);
+        System.out.println("Initial Order Status: " + serverRoomDeployment.getState());
+
+        System.out.println(">>> Dispatching Server Room Deployment Thread...");
+        Thread deploymentEngine = new Thread(serverRoomDeployment);
+        deploymentEngine.start();
+
+        try {
+            deploymentEngine.join();
+            StateRepository.remove(Zlecenie.class, "main");
+        } catch (InterruptedException e) {
+            System.err.println("Main showcase execution monitoring was interrupted.");
+            Thread.currentThread().interrupt();
+        }
+
+        System.out.println("Final Project Order Status: " + serverRoomDeployment.getState());
+    }
+
+    private static Zlecenie init() {
         DzialPracownikow productionDept = DzialPracownikow.create("Production & Assembly");
         Brygadzista foreman = Main.generateForman(productionDept);
         Specjalista assembler = Main.generateSpecialist(productionDept);
@@ -43,37 +75,22 @@ public class Main {
 
         System.out.println("Brigade '" + buildCrew.getNazwa() + "' is ready for deployment.");
 
-        Praca setupInfra = new Praca(RodzajPracy.OGOLNA, 2, "Preparing power supplies and server racks");
+        Praca setupInfra = new Praca(RodzajPracy.OGOLNA, 2000, "Preparing power supplies and server racks");
 
         ArrayList<Praca> phase2Deps = new ArrayList<>();
         phase2Deps.add(setupInfra);
-        Praca installHardware = new Praca(RodzajPracy.MONTAZ, 3, "Mounting servers and switches", phase2Deps);
+        Praca installHardware = new Praca(RodzajPracy.MONTAZ, 3000, "Mounting servers and switches", phase2Deps);
 
         ArrayList<Praca> phase3Deps = new ArrayList<>();
         phase3Deps.add(installHardware);
-        Praca configNetwork = new Praca(RodzajPracy.MONTAZ, 1, "Configuring core routers and firewalls", phase3Deps);
+        Praca configNetwork = new Praca(RodzajPracy.MONTAZ, 1000, "Configuring core routers and firewalls", phase3Deps);
 
         ArrayList<Praca> projectPlan = new ArrayList<>();
         projectPlan.add(setupInfra);
         projectPlan.add(installHardware);
         projectPlan.add(configNetwork);
 
-        Zlecenie serverRoomDeployment = new Zlecenie(true, projectPlan, buildCrew);
-        System.out.println("Created project order: " + serverRoomDeployment);
-        System.out.println("Initial Order Status: " + serverRoomDeployment.getState());
-
-        System.out.println(">>> Dispatching Server Room Deployment Thread...");
-        Thread deploymentEngine = new Thread(serverRoomDeployment);
-        deploymentEngine.start();
-
-        try {
-            deploymentEngine.join();
-        } catch (InterruptedException e) {
-            System.err.println("Main showcase execution monitoring was interrupted.");
-            Thread.currentThread().interrupt();
-        }
-
-        System.out.println("Final Project Order Status: " + serverRoomDeployment.getState());
+        return new Zlecenie(true, projectPlan, buildCrew, "main");
     }
 
     private static void preformFunctionalTests() {
@@ -85,7 +102,21 @@ public class Main {
         Main.testLogger(Main.outputFile);
         Main.testWorkers();
         Main.testTasks();
+        Main.testStateRepository();
         System.out.println("### Tests finished successfully ###" + "\n".repeat(10));
+    }
+
+    private static void testStateRepository() {
+        DzialPracownikow department = DzialPracownikow.create("Dept state save");
+        StateRepository.persistAndFlush(department, "test_dept");
+        DzialPracownikow retrieved = (DzialPracownikow) StateRepository.find(DzialPracownikow.class, "test_dept");
+        assert retrieved != null : "Retrieved is null!";
+        // Also, showcases a bug - a way to get two department with the same name as we don't do
+        // a flyweight patter and don't check for already existed entities - always create new one.
+        // At least they share an ID so in eyes of the application are the same (even though they are
+        // two different references)
+        assert retrieved.getNazwa().equals(department.getNazwa()) : "Retrieved dept is invalid: " + retrieved.getNazwa()  + "==" + department.getNazwa();
+        StateRepository.remove(retrieved, "test_dept");
     }
 
     private static void testIdentifiable() {
@@ -106,9 +137,9 @@ public class Main {
         assert Praca.getById(1).equals(work1) : "Retrieving work #1 by ID doesn't work";
         assert Praca.getById(2).equals(work2) : "Retrieving work #2 by ID doesn't work";
 
-        Zlecenie task1 = new Zlecenie(true);
+        Zlecenie task1 = new Zlecenie(true, null);
         assert task1.getUnique() == 1 : "Zlecenie #1 has incorrect ID " + task1.getUnique();
-        Zlecenie task2 = new Zlecenie(true);
+        Zlecenie task2 = new Zlecenie(true, null);
         assert task2.getUnique() == 2 : "Zlecenie #2 has incorrect ID " + task2.getUnique();
 
         assert Zlecenie.getById(1).equals(task1) : "Retrieving task #1 by ID doesn't work";
@@ -162,7 +193,7 @@ public class Main {
             Path path = Path.of(filePath);
             Files.deleteIfExists(path);
 
-            try (FileLogger logger = new FileLogger(filePath)) {
+            try (FileWriter logger = new FileWriter(filePath)) {
                 ActionLogger.register(logger);
 
                 ActionLogger.saveAction("Test log #1...");
@@ -241,7 +272,7 @@ public class Main {
             DzialPracownikow department = DzialPracownikow.create("Anon Workaholics");
             Brygadzista foreman = Main.generateForman(department, false);
             Brygada brigade = new Brygada("Happy Team #1", foreman);
-            Zlecenie task = new Zlecenie(true, jobs, brigade);
+            Zlecenie task = new Zlecenie(true, jobs, brigade, null);
             task.run();
             assert false : "Task started with not available stuff";
         } catch (InvalidParameterException e) {
@@ -251,7 +282,7 @@ public class Main {
 
     private static void testTaskCannotStartWithoutForemanOrWork() {
         try {
-            Zlecenie task = new Zlecenie(true);
+            Zlecenie task = new Zlecenie(true, null);
             task.run();
             assert false : "Task started even without foreman or work";
         } catch (InvalidParameterException e) {
@@ -263,7 +294,7 @@ public class Main {
             DzialPracownikow department = DzialPracownikow.create("Anon Workaholics");
             Brygadzista foreman = Main.generateForman(department);
             Brygada brigade = new Brygada("Happy Team #1", foreman);
-            Zlecenie task = new Zlecenie(true, brigade);
+            Zlecenie task = new Zlecenie(true, brigade, null);
             task.run();
             assert false : "Task started even without work";
         } catch (InvalidParameterException e) {
@@ -271,7 +302,7 @@ public class Main {
         }
 
         try {
-            Zlecenie task = new Zlecenie(true, new ArrayList<>());
+            Zlecenie task = new Zlecenie(true, new ArrayList<>(), null);
             task.run();
             assert false : "Task started even without foreman";
         } catch (InvalidParameterException e) {
@@ -303,7 +334,7 @@ public class Main {
         jobs.add(assembly);
         jobs.add(general);
         jobs.add(disassembly2);
-        Zlecenie replaceKitchen = new Zlecenie(true, jobs, brigade);
+        Zlecenie replaceKitchen = new Zlecenie(true, jobs, brigade, null);
 
         int previousUnit = Praca.unitOfTime;
         Praca.unitOfTime = 1;
@@ -326,7 +357,6 @@ public class Main {
     private static Specjalista generateSpecialist(DzialPracownikow department) {
         return new Specjalista("Léon", "Professional", LocalDate.of(1994, 2, 12), department, "Loud work");
     }
-
 
     private static Brygadzista generateForman(DzialPracownikow department) {
         return new Brygadzista("Eric", "Foreman", LocalDate.of(1973, 6, 20), department, "house_2", "House1234");

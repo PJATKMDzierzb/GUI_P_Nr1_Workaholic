@@ -2,6 +2,6 @@ package edu.pjwstk.s35267.workaholic.infrastructure.contract;
 
 import java.io.IOException;
 
-public interface ILogger {
-    void log(String description) throws IOException;
+public interface IWriter {
+    void write(String description) throws IOException;
 }

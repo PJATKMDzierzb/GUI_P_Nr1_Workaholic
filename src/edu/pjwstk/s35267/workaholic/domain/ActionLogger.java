@@ -2,7 +2,7 @@ package edu.pjwstk.s35267.workaholic.domain;
 
 import edu.pjwstk.s35267.workaholic.infrastructure.contract.Identifiable;
 import edu.pjwstk.s35267.workaholic.infrastructure.contract.IdentifiableThread;
-import edu.pjwstk.s35267.workaholic.infrastructure.contract.ILogger;
+import edu.pjwstk.s35267.workaholic.infrastructure.contract.IWriter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -18,9 +18,9 @@ import java.time.LocalDateTime;
  * but seems okay to me.
  */
 public abstract class ActionLogger {
-    private static ILogger logger;
+    private static IWriter logger;
 
-    public static void register(ILogger logger) {
+    public static void register(IWriter logger) {
         ActionLogger.logger = logger;
     }
 
@@ -40,7 +40,7 @@ public abstract class ActionLogger {
         }
 
         try {
-            ActionLogger.logger.log(
+            ActionLogger.logger.write(
                 "[" +  LocalDateTime.now() + "] " + description
                 + (objects.length > 0 ?  ", related objects: " + ActionLogger.generateClassesDescription(objects) : "")
             );

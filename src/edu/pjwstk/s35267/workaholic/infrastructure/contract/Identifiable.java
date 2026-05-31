@@ -1,8 +1,9 @@
 package edu.pjwstk.s35267.workaholic.infrastructure.contract;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
-public abstract class Identifiable {
+public abstract class Identifiable implements Serializable {
     private static HashMap<String, Integer> classCounter = new HashMap<>();
     private static HashMap<String, Object> objectMap = new HashMap<>();
     protected final int unique;

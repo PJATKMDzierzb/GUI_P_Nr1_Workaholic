@@ -9,7 +9,7 @@ public class Praca extends IdentifiableThread {
     public static final Object classLock = new Object();
     public static int unitOfTime = 1000;
     private RodzajPracy rodzajPracy;
-    private int czasPracy; // @TODO what purpose this have??
+    private int czasPracy;
     private boolean czyZrealizowane = false;
     private String opis;
     private ArrayList<Praca> dependencies;
@@ -32,6 +32,12 @@ public class Praca extends IdentifiableThread {
     @Override
     public void run() {
         try {
+            if (this.czyZrealizowane()) {
+                ActionLogger.saveAction("Work already finished! " + this.opis + " #" + this.getUnique());
+                System.out.println("Praca #" + this.getUnique() + " (" + this.getOpis() + ") już jest ukończona!");
+                return;
+            }
+
             ActionLogger.saveAction("Start work " + this.opis + " #" + this.getUnique());
             System.out.println("Praca #" + this.getUnique() + " (" + this.getOpis() + ") została zakolejkowana!");
             synchronized (classLock) {
@@ -45,7 +51,7 @@ public class Praca extends IdentifiableThread {
 
             ActionLogger.saveAction("Work " + this.opis + " #" + this.getUnique() + " can proceed!");
             System.out.println("Praca #" + this.getUnique() + " (" + this.getOpis() + ") zaczyna swoje wykonywanie!");
-            Thread.sleep(this.unitOfTime * this.rodzajPracy.weight);
+            Thread.sleep(this.czasPracy + (this.unitOfTime * this.rodzajPracy.weight));
             System.out.println("Praca #" + this.getUnique() + " zakończyła swoje wykonywanie!");
             synchronized (classLock) {
                 this.czyZrealizowane = true;
